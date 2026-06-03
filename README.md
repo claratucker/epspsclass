@@ -93,7 +93,7 @@ If you use EPSPSClass in published work, please cite **both**:
    https://doi.org/10.1016/j.envint.2020.106334
 
 2. **This reimplementation:**
-   [Your paper citation here]. EPSPSClass v1.0.3.
+   [Your paper citation here]. EPSPSClass v1.0.4.
    https://github.com/claratucker/epspsclass
 
 ## Installation
@@ -293,8 +293,8 @@ Benchmark re-run after v1.0.4 threshold fix (class II threshold >=50):
 | Staphylococcus aureus | II | II | Yes |
 | Ruminococcus gnavus | II | II | Yes |
 | Dorea formicigenerans | II | II | Yes |
-| Bacteroides vulgatus | I | Unclassified | No (class Ib, open issue) |
-| Faecalibacterium prausnitzii | I | Unclassified | No (class Ib, open issue) |
+| Bacteroides vulgatus | I | Unclassified | No (phylogenetic distance; see limitations) |
+| Faecalibacterium prausnitzii | I | Unclassified | No (phylogenetic distance; see limitations) |
 
 Agreement: 5/7 (71%) overall; 5/5 (100%) for classes II, III, IV;
 0/2 (0%) for class I due to phylogenetic distance from the vcEPSPS reference.
@@ -384,7 +384,7 @@ this tool is used in a high-stakes classification context.
   24-28 of 148 class I markers due to low identity to vcEPSPS (24-38%),
   placing them in the alignment twilight zone. No threshold is introduced
   because the gap between class I minimum (24 markers) and class II maximum
-  (22 markers) is only 2 markers — too narrow to calibrate reliably. The
+  (22 markers) is only 2 markers; too narrow to calibrate reliably. The
   unclassified fraction in gut microbiome analyses is expected to be enriched
   for distant class I sequences. Report and interpret it explicitly.
 
