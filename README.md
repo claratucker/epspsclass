@@ -35,9 +35,9 @@ tool.
 ## Background
 
 The original **EPSPSClass** web server (`http://ppuigbo.me/programs/EPSPSClass/`)
-described in Leino et al. (2021) is no longer reliably available, having been
-hosted on a personal academic domain that is no longer maintained. No source
-code was published alongside the tool.
+described in Leino et al. (2021) accepts single protein sequences via a web
+interface but provides no API, no batch mode, and no command-line access. No
+source code was published.
 
 This package provides a fully reproducible, locally runnable, open-source
 reimplementation of the identical classification algorithm. All marker
@@ -63,8 +63,7 @@ For each query protein sequence:
 3. **Class I**: all 148 marker positions present (vcEPSPS coordinates).
 4. **Class II**: all 204 marker positions present (cbEPSPS coordinates).
 5. **Class III**: at least 1 of 17 Carozzi domain patterns present
-   (bvEPSPS coordinates). Threshold of 2 rather than 1 reduces false positives
-   from conserved tripeptides.
+   (Carozzi et al. 2006, PCT WO2006/110586; bvEPSPS coordinates).
 6. **Class IV**: ≥10 of 162 marker positions present (sdEPSPS coordinates).
    Threshold used because sdEPSPS has ~39% identity to the other references,
    causing many alignment columns to be filtered by the gap criterion; 64 of
@@ -77,7 +76,7 @@ For each query protein sequence:
 |-------|-------------|-------------------|---------|
 | I     | Sensitive   | *Vibrio cholerae* O1 (UniProt Q9KNE7) | 148 unique positions |
 | II    | Resistant   | *Coxiella burnetii* RSA 493 (Q83EH4) | 204 unique positions |
-| III   | Resistant   | *Brevundimonas vesicularis* (CAA73210) | 21 exclusive triplet motifs |
+| III   | Resistant   | *Brevundimonas vesicularis* (CAA73210) | 17 Carozzi domain patterns (>=1 required) |
 | IV    | Resistant   | *Streptomyces davawensis* JCM 4913 (H6WNZ5) | 162 unique positions (≥10 required) |
 | |  Unknown | Unclassified | |
 
@@ -182,9 +181,14 @@ Supplementary Table 1 of Leino et al. (2021).
 ### Organism-level mixed-class detection
 
 A single sequence can match markers from more than one class (reported in
-`all_classes`). A separate question is whether an organism carries multiple
-EPSPS copies from different classes, which requires aggregating across sequences
-by genome accession.
+`all_classes`). Use `--show-mixed` to print these to stderr during classification:
+
+```bash
+epspsclass classify -i sequences.fasta -o results.tsv --show-mixed --summary
+```
+
+A separate question is whether an organism carries multiple EPSPS copies from
+different classes, which requires aggregating across sequences by genome accession.
 
 ```bash
 # Step 1: classify all sequences
@@ -274,15 +278,15 @@ run_batch_from_s3(
 
 | Feature | Original EPSPSClass | EPSPSClass |
 |---------|---------------------|------------|
-| Availability | Web server (currently down) | Local install, always available |
+| Availability | Web interface, single-sequence only, no API or CLI | Local install, always available |
 | Source code | Not published | Fully open (MIT licence) |
 | Marker derivation | Not documented | Computed from MAFFT alignment of reference sequences; script included |
 | Reference sequences | Fetched from server | Bundled (from Leino et al. 2021 Supp Table 2) |
 | Batch input | Single sequence | Unlimited FASTA batch |
 | AWS support | None | S3 + EC2 + CloudFormation |
-| Alignment | Unknown (likely BLOSUM62) | BLOSUM62, open −11, extend −1 |
+| Alignment | Unknown (likely BLOSUM62) | BLOSUM62, open -11, extend -1 |
 | Output format | Web display | Tab-separated file |
-| Reproducibility | Depends on server | Fully reproducible; markers re-derivable |
+| Reproducibility | Depends on server | Fully reproducible; markers can be re-derived from source |
 
 The classification **logic is identical** to Leino et al. (2021). The marker
 positions were derived computationally from the same reference sequences, not
@@ -292,8 +296,7 @@ manually reconstructed from figures.
 
 - **Unclassified sequences:** A substantial fraction of bacterial EPSPS sequences
   do not match any of the four known classes. The original paper notes that
-  "further empirical studies are needed to identify novel amino acid markers"
-  ; this is an active research frontier. Report the unclassified fraction
+  "further empirical studies are needed to identify novel amino acid markers." This is an active research frontier. Report the unclassified fraction
   explicitly in any publication.
 - **Class III motif completeness:** Class III is defined by 17 sequence
   domain patterns from Carozzi et al. (2006, PCT WO2006/110586, Athenix
