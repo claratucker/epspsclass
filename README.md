@@ -269,7 +269,7 @@ using the aroA gene identifier and filtered to EPSPS length (350-520 aa).
 | Ruminococcus gnavus | II | Unclassified | 79/204 class II markers; below all-markers threshold |
 | Dorea formicigenerans | II | Unclassified | 74/204 class II markers; below all-markers threshold |
 | Bacteroides vulgatus | I | Unclassified | 38.7% identity to class I ref; below 40% threshold |
-| Faecalibacterium prausnitzii | I | Unclassified | 27/148 class I markers; class Ib sub-class not implemented |
+| Faecalibacterium prausnitzii | I | Unclassified | phylogenetic distance from vcEPSPS reference; see limitations |
 
 This testing revealed two systematic issues that informed v1.0.4:
 
@@ -278,12 +278,11 @@ This testing revealed two systematic issues that informed v1.0.4:
    find 14-34. The threshold was set to >=50 at the midpoint of this gap.
    After this fix, all three class II sequences classify correctly.
 
-2. **Class I sub-class coverage.** Leino et al. distinguish Class Ia and Class
-   Ib, both referencing vcEPSPS but with separate marker sets. This tool
-   combines them into a single 148-marker set. Class Ib sequences (which
-   include many gut microbiome Bacteroidetes and Firmicutes) find insufficient
-   combined markers and are reported as Unclassified. This is a known
-   limitation; see Known limitations below.
+2. **Class I phylogenetic distance.** Class I organisms from Bacteroidetes
+   and Firmicutes find only 24-28 of 148 class I markers due to low identity
+   to the vcEPSPS reference (24-38%). Class II organisms find 18-22 class I
+   markers. The 2-marker gap is too narrow to set a reliable threshold. These
+   sequences are reported as Unclassified. See Known limitations below.
 
 Benchmark re-run after v1.0.4 threshold fix (class II threshold >=50):
 
@@ -298,13 +297,13 @@ Benchmark re-run after v1.0.4 threshold fix (class II threshold >=50):
 | Faecalibacterium prausnitzii | I | Unclassified | No (class Ib, open issue) |
 
 Agreement: 5/7 (71%) overall; 5/5 (100%) for classes II, III, IV;
-0/2 (0%) for class I due to the Ia/Ib limitation.
+0/2 (0%) for class I due to phylogenetic distance from the vcEPSPS reference.
 
 For citation in methods sections: "Concordance testing against sequences with
 known classifications from Leino et al. (2021) showed correct classification
 for classes II, III, and IV (5/5). Class I sequences from gut microbiome
-taxa were systematically unclassified due to the class Ia/Ib sub-class
-distinction not being implemented (0/2; see epspsclass known limitations)."
+taxa (Bacteroidetes, Firmicutes) were systematically unclassified due to
+low identity to the vcEPSPS reference (see epspsclass known limitations)."
 
 ## Methodological divergences from the original tool
 
@@ -380,15 +379,15 @@ this tool is used in a high-stakes classification context.
   separately; Leino et al. (2021) cite 18 motifs, likely reflecting a
   different counting of these sub-domain relationships. The biological
   content is equivalent.
-- **Class I sub-classes (Ia and Ib) not implemented:** Leino et al. (2021)
-  distinguish two class I sub-classes (Ia and Ib), both using vcEPSPS as
-  reference but with different marker sets (Supplementary Table 1). This tool
-  combines both into a single 148-marker set. Benchmark testing against gut
-  microbiome sequences shows class I organisms find only 27-28 of 148 combined
-  markers and are classified as Unclassified. Users working with gut microbiome
-  or Bacteroidetes/Firmicutes sequences should be aware that class I organisms
-  may be systematically underclassified. Implementing separate Ia and Ib marker
-  sets is the correct fix and is flagged as an open issue.
+- **Class I sequences from phylogenetically distant taxa are systematically
+  unclassified:** Bacteroidetes and Firmicutes class I organisms find only
+  24-28 of 148 class I markers due to low identity to vcEPSPS (24-38%),
+  placing them in the alignment twilight zone. No threshold is introduced
+  because the gap between class I minimum (24 markers) and class II maximum
+  (22 markers) is only 2 markers — too narrow to calibrate reliably. The
+  unclassified fraction in gut microbiome analyses is expected to be enriched
+  for distant class I sequences. Report and interpret it explicitly.
+
 - **Gap penalties:** The original tool did not publish its alignment parameters.
   BLOSUM62 with open -11 / extend -1 is assumed, matching the defaults for
   T-Coffee and MAFFT, the tools used for the reference alignment.
