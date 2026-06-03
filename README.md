@@ -39,9 +39,9 @@ For each query protein sequence:
    below 40% identity to all references are flagged as unreliable.
 3. **Class I** — all 148 marker positions present (vcEPSPS coordinates).
 4. **Class II** — all 204 marker positions present (cbEPSPS coordinates).
-5. **Class III** — ≥2 of 21 exclusive consecutive triplet motifs present
-   (bvEPSPS coordinates). Threshold of 2 rather than 1 reduces false positives
-   from conserved tripeptides.
+5. **Class III** — at least 1 of 17 domain patterns present (Carozzi et al.
+   2006, PCT WO2006/110586). Domains matched by sliding-window search over
+   the raw query sequence.
 6. **Class IV** — ≥10 of 162 marker positions present (sdEPSPS coordinates).
    Threshold used because sdEPSPS has ~39% identity to the other references,
    causing many alignment columns to be filtered by the gap criterion; 64 of
