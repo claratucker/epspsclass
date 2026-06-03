@@ -16,7 +16,7 @@ runnable, open-source alternative with identical classification logic.
 Differences from original tool
 -------------------------------
 - Fully open source (MIT licence) with all logic exposed
-- Runs locally; no internet required — reference sequences are bundled
+- Runs locally; no internet required (reference sequences are bundled)
 - Batch FASTA input with TSV output; AWS-deployment ready
 - Marker table is versioned and human-readable in classifier.py
 - Validates reference sequence integrity on load
@@ -25,12 +25,12 @@ Differences from original tool
 Citation
 --------
 If you use EPSPSClass in published research, please cite both:
-    1. Leino et al. (2021) — the original classification framework
-    2. [Your paper] — for this reimplementation
+    1. Leino et al. (2021): the original classification framework
+    2. [Your paper]: for this reimplementation
 
 Quickstart
 ----------
-    # Classify sequences (reference sequences are bundled — no setup needed)
+    # Classify sequences (reference sequences are bundled (no setup needed))
     epspsclass classify -i my_sequences.fasta -o results.tsv
 
     # Python API
@@ -42,5 +42,5 @@ Quickstart
 from .classifier import EPSPSClassifier, ClassificationResult
 from .ref_downloader import download_all_references
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 __all__ = ["EPSPSClassifier", "ClassificationResult", "download_all_references"]

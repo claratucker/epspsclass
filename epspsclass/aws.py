@@ -3,7 +3,7 @@ epspsclass/aws.py
 =================
 AWS-specific utilities for running EPSPSClass at scale on EC2 / S3 / Batch.
 
-This module is optional — it is only needed if you are running the classifier
+This module is optional; it is only needed if you are running the classifier
 on AWS infrastructure.  Install the aws extra to get boto3:
 
     pip install epspsclass[aws]
@@ -21,7 +21,7 @@ Security note
 -------------
 Never hard-code AWS credentials.  Use IAM instance roles (the default when
 running on EC2) or environment variables managed by AWS Secrets Manager.
-This module never reads credentials from code — boto3 will pick them up
+This module never reads credentials from code; boto3 will pick them up
 from the standard credential chain automatically.
 """
 

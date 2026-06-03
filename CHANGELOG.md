@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.0.3 (2026)
+
+### Fixed and improved for publication quality
+
+- Corrected classifier.py docstring: alignment has 464 columns not 426
+  (vcEPSPS has 426 residues but the alignment with gaps is 464 columns)
+- Documented 40% identity threshold as our addition, not from Leino et al.
+  (2021), with citations: Rost (1999) Protein Engineering 12:85-94;
+  Addou et al. (2009) J Mol Biol 385:1298-1311
+- Documented class IV >=10 marker threshold with explicit calibration
+  justification (64 of 162 markers accessible in practice due to gap filtering)
+- Documented Carozzi sub-domain hierarchy in classifier.py comments and
+  validate-markers output (Ia/Ib/Ic are sub-domains of I; IIa/IIb of II)
+- Added non-standard amino acid detection: sequences containing IUPAC
+  ambiguity codes (B, Z, X, U etc.) now receive a warning note in output
+- Added error isolation in classify_fasta(): a malformed sequence no longer
+  aborts the entire run; errors are caught, logged, and returned as
+  unclassified with an error note
+- Added is_too_divergent property to ClassificationResult: distinguishes
+  sequences that were below the identity threshold from genuinely unclassified
+  sequences. Added as a column in TSV output. For publication, these two
+  categories should be reported separately
+- Added is_too_divergent column to TSV/CSV output
+- Fixed Nextflow example in README: was using paired-end FASTQ glob
+  (fromFilePairs), corrected to FASTA input (fromPath)
+- Created tests/test_integration.py: 15 integration tests covering
+  self-classification of all four reference sequences, cross-classification
+  checks, identity value sanity checks, and new feature tests. Test count
+  increased from 17 to 32
+
 ## v1.0.2 (2026)
 
 ### Fixed
@@ -30,7 +60,7 @@
   `all_classes` TSV column and that `primary_class` applies the priority rule
   (IV > III > II > I). The Ia/Ib subdivision visible in Leino et al. (2021)
   Supplementary Figure 5 is descriptive (PCA-derived) and not a separate
-  classification output of EPSPSClass — both Ia and Ib use vcEPSPS markers
+  classification output of EPSPSClass; both Ia and Ib use vcEPSPS markers
   and are reported as Class I.
 
 ### Fixed
@@ -51,7 +81,7 @@
 - Classification: Class I (148 markers), Class II (204 markers), Class III
   (21 exclusive triplet motifs, ≥2 required), Class IV (162 markers, ≥10 required)
 - BLOSUM62 substitution matrix, gap open −11, extend −1
-- Reference sequences bundled from Supplementary Table 2 — fully offline operation
+- Reference sequences bundled from Supplementary Table 2, with fully offline operation
 - CLI with stdin/stdout support, TSV/CSV output, documented exit codes
 - Python API: `EPSPSClassifier.classify()`, `classify_fasta()`
 - AWS support: S3 batch workflow, CloudFormation EC2 stack

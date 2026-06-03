@@ -10,14 +10,14 @@ EPSPSClass is designed to slot into standard bioinformatics pipelines:
     # Pipe from stdin, write to stdout
     cat sequences.fasta | epspsclass classify -i - -o -
 
-    # Snakemake rule — see workflow/rules/epspsclass.smk
-    # Nextflow module  — see workflow/modules/epspsclass.nf
+    # Snakemake rule (see workflow/rules/epspsclass.smk)
+    # Nextflow module (see workflow/modules/epspsclass.nf)
 
     # Exit codes:
-    #   0 — success (including sequences with Unclassified result)
-    #   1 — input/output error
-    #   2 — no sequences in input
-    #   3 — all sequences below identity threshold (likely wrong input)
+    #   0: success (including sequences with Unclassified result)
+    #   1: input/output error
+    #   2: no sequences in input
+    #   3: all sequences below identity threshold (likely wrong input)
 
 Usage
 -----
@@ -45,7 +45,7 @@ from .ref_downloader import download_all_references
 
 logger = logging.getLogger(__name__)
 
-# Exit codes — documented so pipeline wrappers can act on them
+# Exit codes (documented so pipeline wrappers can act on them)
 EXIT_OK             = 0
 EXIT_IO_ERROR       = 1
 EXIT_NO_SEQUENCES   = 2
@@ -66,22 +66,24 @@ FIELDNAMES = [
     "identity_III",
     "identity_IV",
     "is_unclassified",
+    "is_too_divergent",
     "notes",
 ]
 
 
 def _row(r):
     return {
-        "query_id":        r.query_id,
-        "primary_class":   r.primary_class,
-        "all_classes":     ";".join(r.classes) if r.classes else "None",
-        "sensitivity":     r.sensitivity,
-        "identity_I":      f"{r.identity_pct.get('I',  0):.2f}",
-        "identity_II":     f"{r.identity_pct.get('II', 0):.2f}",
-        "identity_III":    f"{r.identity_pct.get('III',0):.2f}",
-        "identity_IV":     f"{r.identity_pct.get('IV', 0):.2f}",
-        "is_unclassified": str(r.is_unclassified),
-        "notes":           " | ".join(r.notes),
+        "query_id":         r.query_id,
+        "primary_class":    r.primary_class,
+        "all_classes":      ";".join(r.classes) if r.classes else "None",
+        "sensitivity":      r.sensitivity,
+        "identity_I":       f"{r.identity_pct.get('I',  0):.2f}",
+        "identity_II":      f"{r.identity_pct.get('II', 0):.2f}",
+        "identity_III":     f"{r.identity_pct.get('III',0):.2f}",
+        "identity_IV":      f"{r.identity_pct.get('IV', 0):.2f}",
+        "is_unclassified":  str(r.is_unclassified),
+        "is_too_divergent": str(r.is_too_divergent),
+        "notes":            " | ".join(r.notes),
     }
 
 
@@ -138,7 +140,7 @@ def cmd_classify(args: argparse.Namespace) -> int:
             "Check that the input contains EPSPS protein sequences.",
             file=sys.stderr,
         )
-        # Don't exit with error — still write the output file
+        # Don't exit with error; still write the output file
 
     # Choose delimiter
     delimiter = "\t" if args.format == "tsv" else ","
@@ -217,21 +219,25 @@ def cmd_validate_markers(args: argparse.Namespace) -> int:
         CAROZZI_DOMAINS,
     )
     print("=== EPSPSClass marker table ===\n")
-    print(f"Class I   (vcEPSPS, {len(CLASS_I_MARKERS)} positions) — Sensitive")
+    print(f"Class I   (vcEPSPS, {len(CLASS_I_MARKERS)} positions): Sensitive")
     for pos, aa in sorted(CLASS_I_MARKERS.items()):
         print(f"  pos {pos:4d}: {aa}")
 
-    print(f"\nClass II  (cbEPSPS, {len(CLASS_II_MARKERS)} positions) — Resistant")
+    print(f"\nClass II  (cbEPSPS, {len(CLASS_II_MARKERS)} positions): Resistant")
     for pos, aa in sorted(CLASS_II_MARKERS.items()):
         print(f"  pos {pos:4d}: {aa}")
 
-    print(f"\nClass IV  (sdEPSPS, {len(CLASS_IV_MARKERS)} positions, ≥10 required) — Resistant")
+    print(f"\nClass IV  (sdEPSPS, {len(CLASS_IV_MARKERS)} positions, >=10 required): Resistant")
     for pos, aa in sorted(CLASS_IV_MARKERS.items()):
         print(f"  pos {pos:4d}: {aa}")
 
-    print(f"\nClass III (bvEPSPS, {len(CAROZZI_DOMAINS)} Carozzi domains, >=1 required) — Resistant")
+    SUBDOMAIN_OF = {"Ia": "I", "Ib": "I", "Ic": "I", "IIa": "II", "IIb": "II"}
+    print(f"\nClass III (bvEPSPS, {len(CAROZZI_DOMAINS)} Carozzi domains, >=1 required): Resistant")
+    print("  (Domains Ia/Ib/Ic are sub-domains of I; IIa/IIb are sub-domains of II)")
     for name, domain in CAROZZI_DOMAINS.items():
-        print(f"  Domain {name:5s}: {len(domain)} positions")
+        parent = SUBDOMAIN_OF.get(name, "")
+        parent_note = f" [sub-domain of {parent}]" if parent else ""
+        print(f"  Domain {name:5s}: {len(domain)} positions{parent_note}")
 
     print(
         "\nAll positions in reference sequence coordinates (1-based).\n"
@@ -252,7 +258,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         prog="epspsclass",
         description=(
-            "EPSPSClass — open-source reimplementation of the EPSPS "
+            "EPSPSClass: open-source reimplementation of the EPSPS "
             "glyphosate-sensitivity classifier (Leino et al. 2021).\n\n"
             "Pipeline use:\n"
             "  cat seqs.fasta | epspsclass classify -i - -o - | downstream_tool\n"
@@ -260,7 +266,7 @@ def main() -> None:
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--version", action="version", version="%(prog)s 1.0.2")
+    parser.add_argument("--version", action="version", version="%(prog)s 1.0.3")
 
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -298,8 +304,8 @@ def main() -> None:
         help=(
             "Print sequences matching more than one class to stderr. "
             "These are sequences where markers from multiple classes are "
-            "simultaneously present — biologically meaningful and reported "
-            "in the original EPSPSClass tool. The primary_class column still "
+            "simultaneously present (biologically meaningful and reported "
+            "in the original EPSPSClass tool). The primary_class column still "
             "shows the highest-priority class (IV > III > II > I); the "
             "all_classes column shows all matches."
         ),

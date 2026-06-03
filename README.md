@@ -20,7 +20,7 @@ reimplementation of the identical classification algorithm. All marker
 positions were derived computationally by running a MAFFT L-INS-i multiple
 sequence alignment of the four reference sequences (taken verbatim from
 Supplementary Table 2 of Leino et al. 2021) and identifying alignment columns
-uniquely occupied by each class — producing a 464-column alignment that matches
+uniquely occupied by each class, producing a 464-column alignment that matches
 Supplementary Table 1 exactly. The canonical Pro101/Leu100 sensitivity marker
 (alignment column 105) was confirmed against Supplementary Figure 7.
 
@@ -33,22 +33,21 @@ MAFFT and Biopython installed.
 For each query protein sequence:
 
 1. Global pairwise alignment against each of four reference sequences using
-   BLOSUM62 (open gap −11, extend −1) — matching the T-Coffee default used
-   by the original tool.
+   BLOSUM62 (open gap -11, extend -1), matching the T-Coffee defaults.
 2. Percent identity calculated over aligned (non-gap) columns. Sequences
    below 40% identity to all references are flagged as unreliable.
-3. **Class I** — all 148 marker positions present (vcEPSPS coordinates).
-4. **Class II** — all 204 marker positions present (cbEPSPS coordinates).
-5. **Class III** — at least 1 of 17 domain patterns present (Carozzi et al.
-   2006, PCT WO2006/110586). Domains matched by sliding-window search over
-   the raw query sequence.
-6. **Class IV** — ≥10 of 162 marker positions present (sdEPSPS coordinates).
+3. **Class I**: all 148 marker positions present (vcEPSPS coordinates).
+4. **Class II**: all 204 marker positions present (cbEPSPS coordinates).
+5. **Class III**: at least 1 of 17 Carozzi domain patterns present
+   (bvEPSPS coordinates). Threshold of 2 rather than 1 reduces false positives
+   from conserved tripeptides.
+6. **Class IV**: ≥10 of 162 marker positions present (sdEPSPS coordinates).
    Threshold used because sdEPSPS has ~39% identity to the other references,
    causing many alignment columns to be filtered by the gap criterion; 64 of
    162 markers are accessible in any given pairwise alignment.
 7. A sequence may match more than one class; all matches are reported and the
    most specific (IV > III > II > I) is the primary assignment.
-8. **Unclassified** — no class markers match.
+8. **Unclassified**: no class markers match.
 
 | Class | Sensitivity | Reference organism | Markers |
 |-------|-------------|-------------------|---------|
@@ -56,7 +55,7 @@ For each query protein sequence:
 | II    | Resistant   | *Coxiella burnetii* RSA 493 (Q83EH4) | 204 unique positions |
 | III   | Resistant   | *Brevundimonas vesicularis* (CAA73210) | 21 exclusive triplet motifs |
 | IV    | Resistant   | *Streptomyces davawensis* JCM 4913 (H6WNZ5) | 162 unique positions (≥10 required) |
-| —     | Unknown     | Unclassified | — |
+| |  Unknown | Unclassified | |
 
 ## Citation
 
@@ -69,7 +68,7 @@ If you use EPSPSClass in published work, please cite **both**:
    https://doi.org/10.1016/j.envint.2020.106334
 
 2. **This reimplementation:**
-   [Your paper citation here] — EPSPSClass v1.0.2.
+   [Your paper citation here]. EPSPSClass v1.0.2.
    https://github.com/claratucker/epspsclass
 
 ## Installation
@@ -88,7 +87,7 @@ pip install -e ".[dev]"
 ```
 
 Reference sequences are bundled with the package (from Supplementary Table 2
-of Leino et al. 2021) — no internet access required after installation.
+of Leino et al. 2021). No internet access required after installation.
 
 ## Quickstart
 
@@ -100,7 +99,12 @@ epspsclass classify --input my_sequences.fasta --output results.tsv
 
 Output columns: `query_id`, `primary_class`, `all_classes`, `sensitivity`,
 `identity_I`, `identity_II`, `identity_III`, `identity_IV`, `is_unclassified`,
-`notes`.
+`is_too_divergent`, `notes`.
+
+`is_too_divergent` distinguishes sequences that were below the identity
+threshold for all four references (alignment unreliable) from genuinely
+unclassified sequences (passed identity check but matched no markers).
+For publication, report these two categories separately.
 
 ```bash
 # Custom identity threshold (default 40%)
@@ -225,7 +229,7 @@ manually reconstructed from figures.
 - **Unclassified sequences:** A substantial fraction of bacterial EPSPS sequences
   do not match any of the four known classes. The original paper notes that
   "further empirical studies are needed to identify novel amino acid markers"
-  — this is an active research frontier. Report the unclassified fraction
+  ; this is an active research frontier. Report the unclassified fraction
   explicitly in any publication.
 - **Class III motif completeness:** Class III is defined by 17 sequence
   domain patterns from Carozzi et al. (2006, PCT WO2006/110586, Athenix
@@ -240,7 +244,7 @@ manually reconstructed from figures.
   different counting of these sub-domain relationships. The biological
   content is equivalent.
 - **Gap penalties:** The original tool did not publish its alignment parameters.
-  BLOSUM62 with open −11 / extend −1 is assumed — the original tool did not
+  BLOSUM62 with open -11 / extend -1 is assumed; the original tool did not
   publish its alignment parameters, but these match the defaults for T-Coffee
   and MAFFT, the tools used in the reference alignment.
 
@@ -262,20 +266,20 @@ Please open an issue before submitting major changes.
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
 
 ## Pipeline integration
 
 EPSPSClass is designed to slot into standard bioinformatics pipelines without
 friction. Key features for integration:
 
-- **stdin/stdout support** — use `-i -` and `-o -` to pipe
-- **Documented exit codes** — `0` success, `1` I/O error, `2` no sequences, `3` all unreliable
-- **TSV or CSV output** — downstream tools can consume either directly
-- **`--summary` flag** — prints per-class counts to stderr without polluting stdout
-- **Snakemake rule** — `workflow/rules/epspsclass.smk`
-- **Nextflow DSL2 module** — `workflow/modules/epspsclass.nf`
-- **Conda environment** — `workflow/envs/epspsclass.yaml`
+- **stdin/stdout support**: use `-i -` and `-o -` to pipe
+- **Documented exit codes**: `0` success, `1` I/O error, `2` no sequences, `3` all unreliable
+- **TSV or CSV output**: downstream tools can consume either directly
+- **`--summary` flag**: prints per-class counts to stderr without polluting stdout
+- **Snakemake rule**: `workflow/rules/epspsclass.smk`
+- **Nextflow DSL2 module**: `workflow/modules/epspsclass.nf`
+- **Conda environment**: `workflow/envs/epspsclass.yaml`
 
 ### Pipe example
 
@@ -316,8 +320,8 @@ include { EPSPSCLASS_CLASSIFY } from './workflow/modules/epspsclass.nf'
 
 workflow {
     Channel
-        .fromFilePairs("data/*_{R1,R2}.fastq.gz")
-        .map { id, files -> [ [id: id], files ] }
+        .fromPath("data/*.fasta")
+        .map { f -> [ [id: f.baseName], f ] }
         | EPSPSCLASS_CLASSIFY
 
     EPSPSCLASS_CLASSIFY.out.tsv

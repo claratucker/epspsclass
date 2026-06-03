@@ -5,10 +5,10 @@ Fetch the four canonical EPSPS reference sequences used for classification.
 
 Sources
 -------
-    vcEPSPS (class I)  — UniProt Q9KNE7  (Vibrio cholerae O1 N16961)
-    cbEPSPS (class II) — UniProt Q83EH4  (Coxiella burnetii RSA 493)
-    bvEPSPS (class III)— NCBI   CAA73210 (Brevundimonas vesicularis)
-    sdEPSPS (class IV) — UniProt H6WNZ5  (Streptomyces davawensis JCM 4913)
+    vcEPSPS (class I):  UniProt Q9KNE7  (Vibrio cholerae O1 N16961)
+    cbEPSPS (class II): UniProt Q83EH4  (Coxiella burnetii RSA 493)
+    bvEPSPS (class III): NCBI   CAA73210 (Brevundimonas vesicularis)
+    sdEPSPS (class IV): UniProt H6WNZ5  (Streptomyces davawensis JCM 4913)
 
 These accessions are taken directly from Leino et al. (2021) supplementary
 table 2.  The sequences are downloaded from public databases and cached in

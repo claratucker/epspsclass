@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "epspsclass"
-version = "1.0.2"
+version = "1.0.3"
 description = "Open-source reimplementation of the EPSPSClass EPSPS glyphosate-sensitivity classifier (Leino et al. 2021)"
 readme = "README.md"
 license = { text = "MIT" }

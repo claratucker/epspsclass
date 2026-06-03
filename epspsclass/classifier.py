@@ -14,7 +14,8 @@ Supplementary material used
 ---------------------------
 All marker positions and reference sequences are taken directly from:
   - Supplementary Table 1: full pairwise alignment of all four reference
-    sequences (426 alignment columns, vcEPSPS coords 1-426).
+    sequences (464 alignment columns). vcEPSPS has 426 residues; the alignment
+    has 464 columns due to gaps introduced for the other three references.
   - Supplementary Table 2: FASTA sequences for all four reference organisms.
   - Supplementary Figure 7: resistance-associated positions in E. coli
     (Gly96, Thr97, Pro101, Gly137, Ala183 in E. coli / vcEPSPS numbering).
@@ -23,11 +24,11 @@ Classification logic (from Leino et al. 2021 Materials and Methods)
 --------------------------------------------------------------------
 For each query protein:
 1. Perform global pairwise alignment against each of four reference sequences.
-2. Class I   — ALL class I amino acid markers present at aligned positions.
-3. Class II  — ALL class II amino acid markers present at aligned positions.
-4. Class III — at least ONE complete 3-aa motif from the bvEPSPS set present.
-5. Class IV  — ALL class IV amino acid markers present at aligned positions.
-6. Unclassified — none of the above.
+2. Class I:   ALL class I amino acid markers present at aligned positions.
+3. Class II:  ALL class II amino acid markers present at aligned positions.
+4. Class III: at least ONE complete 3-aa motif from the bvEPSPS set present.
+5. Class IV:  ALL class IV amino acid markers present at aligned positions.
+6. Unclassified: none of the above.
 
 A sequence may match more than one class; all matches are reported.
 
@@ -43,10 +44,10 @@ This corresponds to Pro106 in E. coli numbering (Supplementary Figure 7).
 
 Reference organisms
 -------------------
-  vcEPSPS — Vibrio cholerae O1 N16961        (UniProt Q9KNE7)   Class I
-  cbEPSPS — Coxiella burnetii RSA 493        (UniProt Q83EH4)   Class II
-  bvEPSPS — Brevundimonas vesicularis        (GenBank CAA73210) Class III
-  sdEPSPS — Streptomyces davawensis JCM 4913 (UniProt H6WNZ5)   Class IV
+  vcEPSPS: Vibrio cholerae O1 N16961        (UniProt Q9KNE7)   Class I
+  cbEPSPS: Coxiella burnetii RSA 493        (UniProt Q83EH4)   Class II
+  bvEPSPS: Brevundimonas vesicularis        (GenBank CAA73210) Class III
+  sdEPSPS: Streptomyces davawensis JCM 4913 (UniProt H6WNZ5)   Class IV
 
 Reference sequences are bundled in epspsclass/data/reference_sequences/
 (taken verbatim from Supplementary Table 2; no network required).
@@ -96,7 +97,7 @@ REF_FASTA = {
 CLASS_I_MARKERS: Dict[int, str] = {
     # Derived from MAFFT L-INS-i alignment of four reference sequences
     # (Leino et al. 2021 Supp Table 2). 148 positions unique to vcEPSPS.
-    # KEY: position 101 = Pro — the canonical glyphosate-sensitivity marker
+    # KEY: position 101 = Pro, the canonical glyphosate-sensitivity marker
     # (Supp Fig 7; corresponds to Pro106 in E. coli numbering).
        9: "I",   16: "V",   17: "N",   18: "L",   24: "V",
       36: "S",   43: "N",   44: "L",   46: "D",   50: "I",
@@ -131,8 +132,8 @@ CLASS_I_MARKERS: Dict[int, str] = {
 }
 
 CLASS_II_MARKERS: Dict[int, str] = {
-    # 204 positions unique to cbEPSPS. KEY: position 100 = Leu —
-    # replaces Pro101 of class I; primary resistance marker.
+    # 204 positions unique to cbEPSPS. KEY: position 100 = Leu,
+    # which replaces Pro101 of class I; primary resistance marker.
        8: "S",   15: "I",   16: "C",   17: "V",   20: "D",
       25: "H",   28: "V",   33: "I",   35: "E",   37: "Q",
       39: "Q",   40: "V",   41: "D",   43: "F",   45: "M",
@@ -178,7 +179,7 @@ CLASS_II_MARKERS: Dict[int, str] = {
 
 CLASS_IV_MARKERS: Dict[int, str] = {
     # 162 positions unique to sdEPSPS (Streptomyces davawensis).
-    # Class IV is rare — almost exclusively one actinobacteria clade.
+    # Class IV is rare, confined to one actinobacteria clade.
        3: "V",    5: "D",    6: "I",   14: "A",   18: "F",
       22: "A",   24: "D",   26: "V",   28: "T",   30: "V",
       31: "R",   32: "P",   34: "R",   39: "E",   40: "G",
@@ -233,59 +234,83 @@ CLASS_IV_MARKERS: Dict[int, str] = {
 # False positives are controlled by the specificity of the longer domains
 # (Domain I is 17 positions; Domain VII is 16 positions) rather than by
 # requiring multiple shorter matches.
+#
+# Domain hierarchy: Domains Ia, Ib, Ic are strict sub-domains of Domain I;
+# Domains IIa and IIb are strict sub-domains of Domain II. Any sequence
+# matching Domain I will also match Ia, Ib, and Ic. The function returns
+# True on the first match found, so redundancy does not cause false positives.
+# All 17 are listed for completeness and to allow validate-markers to display
+# the full patent structure. The 12 independent (non-redundant) domains are:
+# I, II, V, VI, VII, XIa, XIIb, XIII, XIV, XV, XVI, XVII.
 # ---------------------------------------------------------------------------
 CAROZZI_DOMAINS: Dict[str, List[tuple]] = {
-    # Domain I (SEQ ID NO:13) — 17 positions
+    # Domain I (SEQ ID NO:13): 17 positions
     "I":    [("L",), ("A",), ("K",), ("G",), ("K","T"), ("S",), ("R","H"),
              ("L",), ("S","T"), ("G",), ("A",), ("L",), ("K",), ("S",),
              ("D",), ("D",), ("T",)],
-    # Domain Ia (SEQ ID NO:14) — sub-domain of I, 5 positions
+    # Domain Ia (SEQ ID NO:14): sub-domain of I, 5 positions
     "Ia":   [("L",), ("A",), ("K",), ("G",), ("K","T")],
-    # Domain Ib (SEQ ID NO:15) — sub-domain of I, 4 positions
+    # Domain Ib (SEQ ID NO:15): sub-domain of I, 4 positions
     "Ib":   [("S",), ("R","H"), ("L",), ("S","T")],
-    # Domain Ic (SEQ ID NO:16) — sub-domain of I, 8 positions
+    # Domain Ic (SEQ ID NO:16): sub-domain of I, 8 positions
     "Ic":   [("G",), ("A",), ("L",), ("K",), ("S",), ("D",), ("D",), ("T",)],
-    # Domain II (SEQ ID NO:17) — 13 positions
+    # Domain II (SEQ ID NO:17): 13 positions
     "II":   [("E",), ("P",), ("D",), ("D","A"), ("S","T"), ("T",), ("F",),
              ("V","I"), ("V",), ("T","E","K"), ("G","S"), ("Q","S","E","T"), ("G",)],
-    # Domain IIa (SEQ ID NO:18) — sub-domain of II, 9 positions
+    # Domain IIa (SEQ ID NO:18): sub-domain of II, 9 positions
     "IIa":  [("E",), ("P",), ("D",), ("D","A"), ("S","T"), ("T",), ("F",),
              ("V","I"), ("V",)],
-    # Domain IIb (SEQ ID NO:19) — sub-domain of II, 4 positions
+    # Domain IIb (SEQ ID NO:19): sub-domain of II, 4 positions
     "IIb":  [("T","E","K"), ("G","S"), ("Q","S","E","T"), ("G",)],
-    # Domain V (SEQ ID NO:22) — 6 positions
+    # Domain V (SEQ ID NO:22): 6 positions
     "V":    [("T","S"), ("G",), ("C",), ("P",), ("P",), ("V",)],
-    # Domain VI (SEQ ID NO:24) — 7 positions
+    # Domain VI (SEQ ID NO:24): 7 positions
     "VI":   [("W",), ("R","K"), ("V",), ("A","H","E","S"), ("P","A"), ("T",), ("G",)],
-    # Domain VII (SEQ ID NO:25) — 16 positions
+    # Domain VII (SEQ ID NO:25): 16 positions
     "VII":  [("E",), ("P",), ("D",), ("A",), ("S",), ("A",), ("A",), ("T",),
              ("Y",), ("L",), ("W",), ("A","G"), ("A",), ("E","Q"), ("V","L","A"), ("L",)],
-    # Domain XIa (SEQ ID NO:30) — 7 positions
+    # Domain XIa (SEQ ID NO:30): 7 positions
     "XIa":  [("Q","K","S"), ("F",), ("P",), ("N","H"), ("M","L"), ("P","Q"), ("A",)],
-    # Domain XIIb (SEQ ID NO:35) — 14 positions
+    # Domain XIIb (SEQ ID NO:35): 14 positions
     "XIIb": [("V","T"), ("E","G"), ("L","I"), ("A","E"), ("N",), ("L",), ("R",),
              ("V",), ("K",), ("E",), ("C",), ("D",), ("R",), ("I","V")],
-    # Domain XIII (SEQ ID NO:37) — 7 positions
+    # Domain XIII (SEQ ID NO:37): 7 positions
     "XIII": [("E",), ("G",), ("D",), ("D",), ("L",), ("L","I"), ("V","I")],
-    # Domain XIV (SEQ ID NO:38) — 6 positions
+    # Domain XIV (SEQ ID NO:38): 6 positions
     "XIV":  [("D","N"), ("P",), ("A","S","T"), ("L",), ("A",), ("G",)],
-    # Domain XV (SEQ ID NO:39) — 10 positions
+    # Domain XV (SEQ ID NO:39): 10 positions
     "XV":   [("A",), ("L","S","E"), ("I",), ("D",), ("T","S"), ("H","F"),
              ("A","S"), ("D",), ("H",), ("R",)],
-    # Domain XVI (SEQ ID NO:41) — 7 positions
+    # Domain XVI (SEQ ID NO:41): 7 positions
     "XVI":  [("F",), ("A",), ("L",), ("A",), ("G","A","T"), ("L",), ("K",)],
-    # Domain XVII (SEQ ID NO:44) — 5 positions
+    # Domain XVII (SEQ ID NO:44): 5 positions
     "XVII": [("A","S","P"), ("S",), ("L",), ("G",), ("V",)],
 }
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Identity threshold for marker checking
+#
+# The original EPSPSClass tool (Leino et al. 2021) calculates and reports
+# percent identity to each reference but does not explicitly state a
+# classification threshold in the published Methods. The 40% default used
+# here is our addition, justified by the "twilight zone" of sequence alignment
+# reliability: below ~40% identity, global pairwise alignments of protein
+# sequences of this length become unreliable, causing gap placement errors
+# that can miscall marker positions (Rost 1999, Protein Engineering 12:85-94;
+# Addou et al. 2009, J Mol Biol 385:1298-1311). This is particularly relevant
+# for class IV, where sdEPSPS shares ~39% identity with the other references.
+# Users requiring behaviour identical to the original tool can set
+# identity_threshold=0.0 to disable the gate.
+# ---------------------------------------------------------------------------
+
 # Pairwise aligner using BLOSUM62 + standard affine gap penalties.
 # BLOSUM62 is the default matrix for T-Coffee and most protein aligners
 # and is the most likely matrix used by the original EPSPSClass tool
 # (Leino et al. 2021 do not specify it explicitly, but T-Coffee defaults
 # to BLOSUM62 for pairwise alignment steps).
-# Gap penalties: -11 open / -1 extend — standard BLOSUM62 convention
-# (Henikoff & Henikoff 1992; Altschul et al. 1997).
+# Gap penalties: -11 open / -1 extend (standard BLOSUM62 convention
+# (Henikoff & Henikoff 1992; Altschul et al. 1997)).
 from Bio.Align import substitution_matrices as _sm
 _ALIGNER = PairwiseAligner()
 _ALIGNER.mode               = "global"
@@ -307,6 +332,26 @@ class ClassificationResult:
     aligned_markers: Dict[str, Dict[int, str]]
     is_unclassified: bool
     notes: List[str] = field(default_factory=list)
+
+    @property
+    def is_too_divergent(self) -> bool:
+        """True if the sequence was below the identity threshold for ALL
+        four references and no classification was attempted. This is distinct
+        from genuinely unclassified sequences (which passed the identity gate
+        but matched no markers). For publication, these two unclassified
+        categories should be reported separately.
+        """
+        return (
+            self.is_unclassified
+            and len(self.identity_pct) > 0
+            and all(
+                any(
+                    f"Identity to class {cls}" in n and "below threshold" in n
+                    for n in self.notes
+                )
+                for cls in self.identity_pct
+            )
+        )
 
     @property
     def primary_class(self) -> str:
@@ -450,7 +495,7 @@ class EPSPSClassifier:
     EPSPS class classifier implementing the algorithm of Leino et al. (2021).
 
     Reference sequences are bundled with the package (from Supplementary
-    Table 2 of Leino et al. 2021) — no internet access required.
+    Table 2 of Leino et al. 2021). No internet access required.
 
     Parameters
     ----------
@@ -487,6 +532,20 @@ class EPSPSClassifier:
         aligned_markers: Dict[str, Dict[int, str]] = {}
         notes: List[str] = []
 
+        # Check for non-standard amino acid codes that could cause silent
+        # marker mismatches. IUPAC ambiguity codes (B, Z, X, U, J, O) are
+        # common in database sequences and will never match a marker.
+        _standard_aa = set("ACDEFGHIKLMNPQRSTVWY")
+        _seq_chars = set(str(query_seq).upper())
+        _nonstandard = _seq_chars - _standard_aa - {"-", "*"}
+        if _nonstandard:
+            notes.append(
+                f"Non-standard amino acid codes detected: "
+                f"{', '.join(sorted(_nonstandard))}. "
+                f"These will not match any class markers and may cause "
+                f"false negatives."
+            )
+
         for cls in ("I", "II", "III", "IV"):
             ref = self._get_ref(cls)
             try:
@@ -508,11 +567,19 @@ class EPSPSClassifier:
                 continue
 
             if cls == "III":
-                # NOTE: the original EPSPSClass tool (Leino et al. 2021) and
-                # Carozzi et al. (2006) define class III as requiring at least
-                # ONE complete domain. We search the raw query sequence directly
-                # using the 17 Carozzi domain patterns (sliding window), which
-                # avoids dependence on alignment quality for short motif detection.
+                # Class III uses a sliding-window search over the raw query
+                # sequence rather than alignment-based marker checking. The
+                # identity threshold above (applied via 'continue') still gates
+                # class III: sequences with <40% identity to bvEPSPS are skipped.
+                # This is our addition; the original paper does not state a
+                # threshold. The identity check uses the bvEPSPS pairwise
+                # alignment computed above, even though the domain search itself
+                # uses the raw sequence. This ensures consistency with the
+                # other three classes.
+                # NOTE: Leino et al. (2021) Methods says "at least one complete
+                # motif (out of 18) from the sdEPSPS sequence"; sdEPSPS appears
+                # to be a typo for bvEPSPS (the class III reference), confirmed
+                # by all other text in the paper and the supplementary tables.
                 if _check_class_iii_domains(str(query_seq)):
                     classes.append("III")
                     aligned_markers["III"] = {}
@@ -527,13 +594,19 @@ class EPSPSClassifier:
                 if ok:
                     classes.append("II")
             elif cls == "IV":
-                # Class IV uses a minimum-count threshold rather than
-                # requiring ALL markers, because sdEPSPS has low identity
-                # (~39%) to the other references, causing many alignment
-                # columns to be filtered by the gap criterion. Requiring
-                # >=10 markers from the 162-position set is both specific
-                # and robust. Class IV is rare (<1% of bacteria) and
-                # confined to one actinobacteria clade (Supp Fig 3).
+                # Class IV uses a minimum-count threshold (>=10 of 162 markers)
+                # rather than requiring ALL markers. Justification: sdEPSPS
+                # shares ~39% identity with the other three references, placing
+                # it near the alignment twilight zone (Rost 1999). In practice,
+                # only 64 of 162 markers are accessible in any single pairwise
+                # alignment because many columns are filtered by the gap
+                # criterion in _check_markers (columns where either sequence
+                # has a gap are skipped). The threshold of >=10 was chosen as
+                # the minimum that correctly self-classifies sdEPSPS (which
+                # finds 64 markers) while being high enough to exclude sequences
+                # with fewer than 10 coincidental matches. Class IV is rare
+                # (<1% of bacteria) and confined to one actinobacteria clade
+                # (Leino et al. 2021, Supplementary Figure 3).
                 _, found = _check_markers(aq, ar, CLASS_IV_MARKERS)
                 aligned_markers["IV"] = found
                 if len(found) >= 10:
@@ -550,9 +623,27 @@ class EPSPSClassifier:
         )
 
     def classify_fasta(self, fasta_path) -> List[ClassificationResult]:
-        """Classify all sequences in a FASTA file."""
+        """Classify all sequences in a FASTA file.
+
+        Errors on individual sequences are caught and logged rather than
+        aborting the entire run. Failed sequences are returned with
+        is_unclassified=True and an error note.
+        """
         results = []
         for record in SeqIO.parse(str(fasta_path), "fasta"):
-            result = self.classify(record.id, record.seq)
+            try:
+                result = self.classify(record.id, record.seq)
+            except Exception as exc:
+                logger.error(
+                    "Failed to classify sequence %s: %s", record.id, exc
+                )
+                result = ClassificationResult(
+                    query_id=record.id,
+                    classes=[],
+                    identity_pct={},
+                    aligned_markers={},
+                    is_unclassified=True,
+                    notes=[f"Classification error: {exc}"],
+                )
             results.append(result)
         return results
