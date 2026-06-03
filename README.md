@@ -307,56 +307,41 @@ low identity to the vcEPSPS reference (see epspsclass known limitations)."
 
 ## Methodological divergences from the original tool
 
-The following decisions were made during reimplementation where the original
-paper was silent or ambiguous. Each is a place where results from this tool
-could differ from the original. Users should understand and be able to defend
-these choices independently before citing results in publication.
+The following decisions were made where the original paper was silent or ambiguous.
+Each represents a place where this tool's results may differ from the original.
+Report these in your methods section.
 
-**Alignment parameters (BLOSUM62, gap open -11, extend -1).** The original paper
-did not publish its alignment parameters. These values are assumed because they
-are the defaults for T-Coffee and MAFFT. If the original tool used different
-parameters, marker position mapping could differ, particularly for sequences near
-the 40% identity threshold where gap placement is less certain.
+**Alignment parameters (BLOSUM62, gap open -11, extend -1).** Not published in
+the original paper. These values match the T-Coffee and MAFFT defaults and are
+assumed to be consistent with the original tool. Results may differ for sequences
+near the 40% identity threshold where gap placement is sensitive to parameter
+choice.
 
-**40% identity threshold.** The original paper calculates and reports percent
-identity but does not state a classification threshold. The 40% gate used here
-is our addition, justified by the known unreliability of global pairwise
-alignments below this level (Rost 1999). A reviewer will ask you to justify
-this choice; the justification is alignment reliability, not fidelity to the
-original tool.
+**40% identity threshold.** Not stated in Leino et al. (2021), which reports
+identity but does not use it to gate classification. This threshold is our
+addition, justified by the known unreliability of pairwise alignments below 40%
+identity (Rost 1999, *Protein Engineering* 12:85-94). Set `--threshold 0` to
+disable it and match the original tool's behaviour exactly.
 
 **Class II: >=50 of 204 markers required.** The original paper states "all
-markers present" for class II. Benchmark testing against sequences from Leino
-et al. (2021) Table 1 showed class II organisms (Staphylococcus aureus,
-Ruminococcus gnavus, Dorea formicigenerans) find 60-79 of 204 markers, while
-class I organisms find only 14-34. Requiring all 204 markers would exclude all
-tested class II sequences. A threshold of 50 sits at the midpoint of this gap
-and correctly classifies all tested class II organisms while excluding class I.
+markers present." Benchmark testing showed class II organisms find 60-79 of 204
+markers while class I organisms find 14-34. Requiring all 204 excluded every
+tested class II sequence; the threshold of 50 correctly separates the two groups.
 
 **Class IV: >=10 of 162 markers required.** The original paper states "all
-markers present" for class IV. The sdEPSPS reference shares only ~39% identity
-with the other three references, placing it near the alignment twilight zone.
-In practice, only 64 of 162 markers are accessible in any pairwise alignment
-because columns where either sequence has a gap are excluded from checking.
-Requiring all 162 would fail to classify even the sdEPSPS reference itself.
-The threshold of >=10 correctly classifies sdEPSPS while being conservative
-enough to exclude coincidental matches. Both class II and class IV thresholds
-are calibrated from benchmark data and should be reported explicitly in any
-methods section.
+markers present." The sdEPSPS reference shares only ~39% identity with the other
+three references; in practice only 64 of 162 markers are accessible in any
+pairwise alignment due to gap filtering. A threshold of 10 correctly classifies
+sdEPSPS while excluding coincidental matches.
 
-**Class III: sliding-window domain matching vs. alignment-based.** The original
-tool performed pairwise alignment against bvEPSPS and then checked motif positions
-in the aligned sequence. This implementation searches the raw query sequence
-directly using a sliding-window match against the 17 Carozzi patent domains. The
-approaches should give equivalent results for well-aligned sequences but may
-differ at the boundaries of the identity threshold.
+**Class III: sliding-window search.** The original tool checked motif positions
+in the pairwise alignment. This implementation searches the raw query sequence
+directly using the 17 Carozzi patent domains. Results should be equivalent for
+well-aligned sequences.
 
-**Concordance benchmark.** The original EPSPSClass web server is no longer
-accessible. A formal concordance experiment (running the same sequences through
-both tools and reporting a confusion matrix) is therefore not possible. This is
-the most significant limitation of the current implementation. If the original
-tool becomes available, a concordance benchmark should be run and reported before
-this tool is used in a high-stakes classification context.
+**No concordance benchmark possible.** The original web server is no longer
+accessible and its source code was never published. Results cannot be formally
+verified against the original tool's output.
 
 ## Known limitations
 
