@@ -1,7 +1,0 @@
-query_id	primary_class	all_classes	sensitivity	identity_I	identity_II	identity_III	identity_IV	is_unclassified	is_too_divergent	notes
-Bacteroides_vulgatus	Unclassified	None	Unknown	38.73	28.87	35.84	30.47	True	False	Identity to class II ref (28.9%) below threshold (30.0%); marker check skipped.
-Faecalibacterium_prausnitzii	IV	IV	Resistant	32.77	29.47	29.77	30.98	False	False	Identity to class II ref (29.5%) below threshold (30.0%); marker check skipped. | Identity to class III ref (29.8%) below threshold (30.0%); marker check skipped.
-Staphylococcus_aureus	Unclassified	None	Unknown	30.27	41.88	32.56	27.43	True	False	Identity to class IV ref (27.4%) below threshold (30.0%); marker check skipped.
-Ruminococcus_gnavus	Unclassified	None	Unknown	31.71	47.98	31.35	27.32	True	False	Identity to class IV ref (27.3%) below threshold (30.0%); marker check skipped.
-Dorea_formicigenerans	Unclassified	None	Unknown	31.86	47.75	33.76	30.28	True	False	
-Streptomyces_davawensis	IV	IV	Resistant	39.80	29.82	39.02	100.00	False	False	Identity to class II ref (29.8%) below threshold (30.0%); marker check skipped.
