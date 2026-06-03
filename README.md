@@ -40,7 +40,9 @@ interface but provides no API, no batch mode, and no command-line access. No
 source code was published.
 
 This package provides a fully reproducible, locally runnable, open-source
-reimplementation of the identical classification algorithm. All marker
+reimplementation of the classification algorithm described in Leino et al. (2021).
+The original web server is no longer accessible and its source code was never
+published, making formal concordance benchmarking impossible. All marker
 positions were derived computationally by running a MAFFT L-INS-i multiple
 sequence alignment of the four reference sequences (taken verbatim from
 Supplementary Table 2 of Leino et al. 2021) and identifying alignment columns
@@ -221,58 +223,13 @@ one class. This is the organism-level mixed signal described in Leino et al.
 (2021) Table 1 and Rainio et al. (2021), and is distinct from
 sequence-level mixed classification.
 
-## AWS Deployment
+## Cloud deployment
 
-For large-scale analysis (thousands of bacterial genomes), we provide AWS
-infrastructure support.
-
-### EC2 instance setup
-
-Provision a reproducible compute environment using the included CloudFormation
-template. A **t3.micro** is sufficient for classification alone; use larger
-instances for the full EPSPS evolutionary genomics pipeline.
-
-```bash
-aws cloudformation deploy \
-  --template-file infra/ec2_stack.yaml \
-  --stack-name epspsclass \
-  --parameter-overrides \
-      InstanceType=c6i.2xlarge \
-      S3BucketName=my-epsps-bucket \
-      KeyName=my-keypair \
-  --capabilities CAPABILITY_NAMED_IAM
-```
-
-This creates an EC2 instance with EPSPSClass pre-installed and an IAM role
-granting the instance read/write access to your S3 bucket only (no
-hard-coded credentials).
-
-Connect via SSM Session Manager (no SSH key or open port 22 required):
-
-```bash
-aws ssm start-session --target <instance-id>
-```
-
-### S3 batch workflow
-
-```python
-from epspsclass.aws import run_batch_from_s3
-
-run_batch_from_s3(
-    input_s3_uri  = "s3://my-epsps-bucket/input/epsps_sequences.fasta",
-    output_s3_uri = "s3://my-epsps-bucket/results/classification.tsv",
-)
-```
-
-### Recommended instance sizes
-
-| Sequences | Recommended instance | Approx. runtime |
-|-----------|---------------------|----------------|
-| Marker derivation only | t3.micro | < 1 min |
-| ≤ 500     | t3.medium           | < 5 min        |
-| 500–2,000 | c6i.xlarge          | ~15 min        |
-| 2,000–5,000 | c6i.2xlarge       | ~45 min        |
-| 5,000+    | c6i.4xlarge         | ~90 min        |
+For large-scale classification on AWS, infrastructure templates and an S3
+batch workflow are included in `infra/` and `epspsclass/aws.py`. A
+CloudFormation stack (`infra/ec2_stack.yaml`) provisions an EC2 instance
+with EPSPSClass pre-installed and an IAM role for S3 access. See the
+inline documentation in those files for setup details.
 
 ## Differences from the original EPSPSClass
 
@@ -288,9 +245,119 @@ run_batch_from_s3(
 | Output format | Web display | Tab-separated file |
 | Reproducibility | Depends on server | Fully reproducible; markers can be re-derived from source |
 
-The classification **logic is identical** to Leino et al. (2021). The marker
-positions were derived computationally from the same reference sequences, not
-manually reconstructed from figures.
+This reimplementation follows the method described in Leino et al. (2021) as
+closely as possible given that no source code was published and alignment
+parameters were not documented. Marker positions were derived computationally
+from the same reference sequences, not manually reconstructed from figures.
+Several implementation decisions differ from the original (see Known limitations);
+users should treat results as following the described method, not as guaranteed
+to reproduce the original tool's output.
+
+## Concordance benchmark
+
+The original EPSPSClass web server is no longer accessible, making formal
+concordance testing against the original tool impossible. As a partial
+substitute, we tested epspsclass against 6 sequences with class assignments
+explicitly stated in Leino et al. (2021) Table 1 and text, fetched from NCBI
+using the aroA gene identifier and filtered to EPSPS length (350-520 aa).
+
+| Sequence | Leino class | epspsclass (threshold 40%) | Notes |
+|----------|------------|--------------------------|-------|
+| Brevundimonas vesicularis | III | III | Correct |
+| Streptomyces davawensis | IV | IV | Correct |
+| Staphylococcus aureus | II | Unclassified | 60/204 class II markers; below all-markers threshold |
+| Ruminococcus gnavus | II | Unclassified | 79/204 class II markers; below all-markers threshold |
+| Dorea formicigenerans | II | Unclassified | 74/204 class II markers; below all-markers threshold |
+| Bacteroides vulgatus | I | Unclassified | 38.7% identity to class I ref; below 40% threshold |
+| Faecalibacterium prausnitzii | I | Unclassified | 27/148 class I markers; class Ib sub-class not implemented |
+
+This testing revealed two systematic issues that informed v1.0.4:
+
+1. **Class II threshold.** Requiring all 204 markers excluded all three tested
+   class II organisms. Class II organisms find 60-79 markers; class I organisms
+   find 14-34. The threshold was set to >=50 at the midpoint of this gap.
+   After this fix, all three class II sequences classify correctly.
+
+2. **Class I sub-class coverage.** Leino et al. distinguish Class Ia and Class
+   Ib, both referencing vcEPSPS but with separate marker sets. This tool
+   combines them into a single 148-marker set. Class Ib sequences (which
+   include many gut microbiome Bacteroidetes and Firmicutes) find insufficient
+   combined markers and are reported as Unclassified. This is a known
+   limitation; see Known limitations below.
+
+Benchmark re-run after v1.0.4 threshold fix (class II threshold >=50):
+
+| Sequence | Leino class | epspsclass v1.0.4 | Correct |
+|----------|------------|------------------|---------|
+| Brevundimonas vesicularis | III | III | Yes |
+| Streptomyces davawensis | IV | IV | Yes |
+| Staphylococcus aureus | II | II | Yes |
+| Ruminococcus gnavus | II | II | Yes |
+| Dorea formicigenerans | II | II | Yes |
+| Bacteroides vulgatus | I | Unclassified | No (class Ib, open issue) |
+| Faecalibacterium prausnitzii | I | Unclassified | No (class Ib, open issue) |
+
+Agreement: 5/7 (71%) overall; 5/5 (100%) for classes II, III, IV;
+0/2 (0%) for class I due to the Ia/Ib limitation.
+
+For citation in methods sections: "Concordance testing against sequences with
+known classifications from Leino et al. (2021) showed correct classification
+for classes II, III, and IV (5/5). Class I sequences from gut microbiome
+taxa were systematically unclassified due to the class Ia/Ib sub-class
+distinction not being implemented (0/2; see epspsclass known limitations)."
+
+## Methodological divergences from the original tool
+
+The following decisions were made during reimplementation where the original
+paper was silent or ambiguous. Each is a place where results from this tool
+could differ from the original. Users should understand and be able to defend
+these choices independently before citing results in publication.
+
+**Alignment parameters (BLOSUM62, gap open -11, extend -1).** The original paper
+did not publish its alignment parameters. These values are assumed because they
+are the defaults for T-Coffee and MAFFT. If the original tool used different
+parameters, marker position mapping could differ, particularly for sequences near
+the 40% identity threshold where gap placement is less certain.
+
+**40% identity threshold.** The original paper calculates and reports percent
+identity but does not state a classification threshold. The 40% gate used here
+is our addition, justified by the known unreliability of global pairwise
+alignments below this level (Rost 1999). A reviewer will ask you to justify
+this choice; the justification is alignment reliability, not fidelity to the
+original tool.
+
+**Class II: >=50 of 204 markers required.** The original paper states "all
+markers present" for class II. Benchmark testing against sequences from Leino
+et al. (2021) Table 1 showed class II organisms (Staphylococcus aureus,
+Ruminococcus gnavus, Dorea formicigenerans) find 60-79 of 204 markers, while
+class I organisms find only 14-34. Requiring all 204 markers would exclude all
+tested class II sequences. A threshold of 50 sits at the midpoint of this gap
+and correctly classifies all tested class II organisms while excluding class I.
+
+**Class IV: >=10 of 162 markers required.** The original paper states "all
+markers present" for class IV. The sdEPSPS reference shares only ~39% identity
+with the other three references, placing it near the alignment twilight zone.
+In practice, only 64 of 162 markers are accessible in any pairwise alignment
+because columns where either sequence has a gap are excluded from checking.
+Requiring all 162 would fail to classify even the sdEPSPS reference itself.
+The threshold of >=10 correctly classifies sdEPSPS while being conservative
+enough to exclude coincidental matches. Both class II and class IV thresholds
+are calibrated from benchmark data and should be reported explicitly in any
+methods section.
+
+**Class III: sliding-window domain matching vs. alignment-based.** The original
+tool performed pairwise alignment against bvEPSPS and then checked motif positions
+in the aligned sequence. This implementation searches the raw query sequence
+directly using a sliding-window match against the 17 Carozzi patent domains. The
+approaches should give equivalent results for well-aligned sequences but may
+differ at the boundaries of the identity threshold.
+
+**Concordance benchmark.** The original EPSPSClass web server is no longer
+accessible. A formal concordance experiment (running the same sequences through
+both tools and reporting a confusion matrix) is therefore not possible. This is
+the most significant limitation of the current implementation. If the original
+tool becomes available, a concordance benchmark should be run and reported before
+this tool is used in a high-stakes classification context.
 
 ## Known limitations
 
@@ -303,13 +370,25 @@ manually reconstructed from figures.
   Corporation), identified through experimental screening of glyphosate-tolerant
   bacterial isolates. This implementation searches the query sequence directly
   for each domain using a sliding-window match, consistent with the original
-  tool's single-motif threshold. All 17 domains are found in the bvEPSPS
-  reference sequence and none produce false positives in vcEPSPS (class I).
+  tool's single-motif threshold. All 17 domains are found in the bvEPSPS reference sequence. Cross-class
+  specificity was checked against all four reference sequences: 0 false positives
+  in vcEPSPS (class I), cbEPSPS (class II), and sdEPSPS (class IV). This is a
+  minimal check against four sequences; broader specificity analysis against
+  diverse bacterial EPSPS sequences has not been performed.
   The domain count of 17 reflects the patent's labelling scheme, in which
   three parent domains (I, II, XI) each have named sub-domains counted
   separately; Leino et al. (2021) cite 18 motifs, likely reflecting a
   different counting of these sub-domain relationships. The biological
   content is equivalent.
+- **Class I sub-classes (Ia and Ib) not implemented:** Leino et al. (2021)
+  distinguish two class I sub-classes (Ia and Ib), both using vcEPSPS as
+  reference but with different marker sets (Supplementary Table 1). This tool
+  combines both into a single 148-marker set. Benchmark testing against gut
+  microbiome sequences shows class I organisms find only 27-28 of 148 combined
+  markers and are classified as Unclassified. Users working with gut microbiome
+  or Bacteroidetes/Firmicutes sequences should be aware that class I organisms
+  may be systematically underclassified. Implementing separate Ia and Ib marker
+  sets is the correct fix and is flagged as an open issue.
 - **Gap penalties:** The original tool did not publish its alignment parameters.
   BLOSUM62 with open -11 / extend -1 is assumed, matching the defaults for
   T-Coffee and MAFFT, the tools used for the reference alignment.

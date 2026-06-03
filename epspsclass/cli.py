@@ -324,7 +324,7 @@ def main() -> None:
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--version", action="version", version="%(prog)s 1.0.3")
+    parser.add_argument("--version", action="version", version="%(prog)s 1.0.4")
 
     sub = parser.add_subparsers(dest="command", required=True)
 

@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.0.4 (2026)
+
+### Fixed based on benchmark testing
+
+Benchmark testing against gut microbiome sequences with known classifications
+from Leino et al. (2021) Table 1 revealed two systematic classification failures:
+
+- **Class II threshold changed to >=50 of 204 markers.** Requiring all 204
+  markers failed to classify known class II organisms (Staphylococcus aureus,
+  Ruminococcus gnavus, Dorea formicigenerans), which found 60-79 markers.
+  Class I organisms found only 14-34 markers. Threshold of 50 correctly
+  separates the two groups in benchmark data.
+- **Class I Ia/Ib sub-class limitation documented.** Leino et al. (2021)
+  define two class I sub-classes (Ia and Ib) with separate marker sets in
+  Supplementary Table 1. This tool combines both into a single 148-marker
+  set, causing class Ib sequences to be misclassified as Unclassified.
+  Gut microbiome class I organisms find only 27-28 of 148 combined markers.
+  This is a known limitation; implementing separate Ia and Ib marker sets
+  is an open issue.
+- README methodological divergences section updated to document both thresholds
+  with benchmark calibration data.
+- Known limitations section updated with class I Ia/Ib issue.
+
 ## v1.0.3 (2026)
 
 ### Fixed and improved for publication quality

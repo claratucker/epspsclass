@@ -42,5 +42,5 @@ Quickstart
 from .classifier import EPSPSClassifier, ClassificationResult
 from .ref_downloader import download_all_references
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 __all__ = ["EPSPSClassifier", "ClassificationResult", "download_all_references"]
