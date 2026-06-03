@@ -28,3 +28,7 @@ venv/
 refs/
 marker_derivation_output.txt
 *.zip
+benchmark*.fasta
+benchmark*.tsv
+test_refs.fasta
+test_results.tsv
