@@ -339,10 +339,6 @@ in the pairwise alignment. This implementation searches the raw query sequence
 directly using the 17 Carozzi patent domains. Results should be equivalent for
 well-aligned sequences.
 
-**No concordance benchmark possible.** The original web server is no longer
-accessible and its source code was never published. Results cannot be formally
-verified against the original tool's output.
-
 ## Known limitations
 
 - **Unclassified sequences:** A substantial fraction of bacterial EPSPS sequences
