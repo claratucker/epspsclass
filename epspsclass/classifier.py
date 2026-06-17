@@ -386,7 +386,13 @@ class ClassificationResult:
     identity_pct: Dict[str, float]
     aligned_markers: Dict[str, Dict[int, str]]
     is_unclassified: bool
+    confidence_gap: float = 0.0
     notes: List[str] = field(default_factory=list)
+
+    @property
+    def primary_class(self) -> str:
+        """Return the best-matching class, or 'Unclassified' if none."""
+        return self.classes[0] if self.classes else "Unclassified"
 
     @property
     def is_too_divergent(self) -> bool:
