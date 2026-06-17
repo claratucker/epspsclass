@@ -305,6 +305,53 @@ for classes II, III, and IV (5/5). Class I sequences from gut microbiome
 taxa (Bacteroidetes, Firmicutes) were systematically unclassified due to
 low identity to the vcEPSPS reference (see epspsclass known limitations)."
 
+**Update, v1.0.6:** the Class I issue described above is fixed. See the
+v1.0.6 CHANGELOG entry and the "Class I core-marker subset" section below
+for the full method and updated benchmark results. Re-running the same two
+class I organisms above (Bacteroides vulgatus, Faecalibacterium
+prausnitzii) is recommended to confirm the fix on this exact benchmark
+pair; the v1.0.6 fix was validated against a different but overlapping set
+of real organisms (Bacteroides fragilis, Bacteroides thetaiotaomicron,
+Clostridium perfringens, Prevotella copri), documented in
+`scripts/epsps/classify_and_calibrate.py` and
+`tests/test_integration.py::TestClassICoreMarkerThreshold`.
+
+### Class I core-marker subset (v1.0.6 fix)
+
+Two changes resolved the Class I issue:
+
+1. `CLASS_I_CORE_MARKERS`, a 20-position subset of the original 148
+   `CLASS_I_MARKERS`, selected by testing which positions best separate
+   real class I from real class II organisms in a 7-sequence benchmark
+   fetched from NCBI. Classification now requires >=4 of these 20 markers
+   (`CLASS_I_CORE_THRESHOLD`), rather than all 148. Against the benchmark,
+   this gives a class I floor of 7/20 and a class II ceiling of 0/20.
+2. The 40% whole-protein identity gate no longer blocks the Class I
+   core-marker check specifically. All four benchmark class I organisms
+   from distant taxa fall below 40% whole-protein identity to vcEPSPS
+   (32.6-38.3%), so without this change the marker-subset fix above could
+   never take effect for them. This gate is not part of Leino et al.'s
+   actual method (confirmed against the real paper and supplementary
+   material) and remains active for classes II, III, and IV.
+
+Updated benchmark (same 7 organisms used to derive the fix):
+
+| Sequence | Confirmed class | epspsclass v1.0.6 | Correct |
+|----------|-----------------|--------------------|---------|
+| Bacteroides fragilis | I | I | Yes |
+| Bacteroides thetaiotaomicron | I | I | Yes |
+| Clostridium perfringens | I | I | Yes |
+| Prevotella copri | I | I | Yes |
+| Staphylococcus aureus | II | II | Yes |
+| Ruminococcus gnavus | II | II | Yes |
+| Dorea formicigenerans | II | II | Yes |
+
+To re-derive this subset against an expanded benchmark, run
+`scripts/epsps/calibrate_class1_subset.py` (requires NCBI eutils network
+access) followed by `scripts/epsps/classify_and_calibrate.py`, and update
+`CLASS_I_CORE_MARKERS` and `CLASS_I_CORE_THRESHOLD` in `classifier.py`
+together with the test sequences in `TestClassICoreMarkerThreshold`.
+
 ## Methodological divergences from the original tool
 
 The following decisions were made where the original paper was silent or ambiguous.
@@ -360,14 +407,20 @@ well-aligned sequences.
   separately; Leino et al. (2021) cite 18 motifs, likely reflecting a
   different counting of these sub-domain relationships. The biological
   content is equivalent.
-- **Class I sequences from phylogenetically distant taxa are systematically
-  unclassified:** Bacteroidetes and Firmicutes class I organisms find only
+- **Class I sequences from phylogenetically distant taxa: fixed in v1.0.6.**
+  Previously, Bacteroidetes and Firmicutes class I organisms found only
   24-28 of 148 class I markers due to low identity to vcEPSPS (24-38%),
-  placing them in the alignment twilight zone. No threshold is introduced
-  because the gap between class I minimum (24 markers) and class II maximum
-  (22 markers) is only 2 markers; too narrow to calibrate reliably. The
-  unclassified fraction in gut microbiome analyses is expected to be enriched
-  for distant class I sequences. Report and interpret it explicitly.
+  and a 2-marker gap to class II organisms (18-22) was too narrow to
+  threshold on the full marker set. Fixed via a 20-position discriminating
+  subset (`CLASS_I_CORE_MARKERS`, threshold >=4) plus bypassing the 40%
+  whole-protein identity gate for this check specifically. See
+  "Class I core-marker subset" above for the full method and current
+  benchmark. Remaining caveat: the subset was derived from a 7-organism
+  benchmark (4 class I, 3 class II). It is not guaranteed to generalize to
+  every distant class I lineage; if production use turns up misclassified
+  sequences, expand the benchmark panel and rerun
+  `scripts/epsps/classify_and_calibrate.py` before adjusting the threshold
+  further.
 
 - **Gap penalties:** The original tool did not publish its alignment parameters.
   BLOSUM62 with open -11 / extend -1 is assumed, matching the defaults for

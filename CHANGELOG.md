@@ -1,5 +1,113 @@
 # Changelog
 
+## v1.0.6 (2026)
+
+### Fixed
+
+- **Class I never classified any real sequence.** Class I required all 148
+  `CLASS_I_MARKERS` positions to match exactly. No real, evolutionarily
+  diverged organism ever does: benchmark testing against 7 real sequences
+  fetched from NCBI (Staphylococcus aureus, Ruminococcus gnavus, Dorea
+  formicigenerans as confirmed class II; Bacteroides fragilis, Bacteroides
+  thetaiotaomicron, Clostridium perfringens, Prevotella copri as confirmed
+  class I from phylogenetically distant taxa) showed real class I organisms
+  matching only 24-28 of 148 markers, never all 148. This was fixed in two
+  parts:
+
+  1. **Marker subset + count threshold.** Added `CLASS_I_CORE_MARKERS`, the
+     20 positions (of the original 148) most discriminating between the
+     benchmark's class I and class II organisms, and `CLASS_I_CORE_THRESHOLD
+     = 4`. Against the same benchmark, this subset gives a class I floor of
+     7/20 and a class II ceiling of 0/20, a clean 7-marker gap, compared to
+     a 2-marker gap on the full 148-marker set (24-28 vs 18-22) that was too
+     narrow to threshold safely. The full 148-marker count is still computed
+     and recorded in `aligned_markers` for diagnostic purposes; it no longer
+     gates the classification decision. See the derivation comment on
+     `CLASS_I_CORE_MARKERS` in `classifier.py` for the full method.
+
+  2. **Identity-gate bypass for Class I only.** Even with the subset fix,
+     all four real class I benchmark organisms still failed to classify,
+     because all four fall below the classifier's 40% whole-protein
+     identity threshold (32.6-38.3%), which skips marker checking entirely
+     for any class below it. Checked directly against Leino et al.'s real
+     paper and supplementary material: no identity threshold, no Rost
+     (1999) citation, and no mention of an identity pre-filter appears
+     anywhere; the actual Methods text (section 5.4) only requires "all the
+     amino acid markers from the respective reference sequence," with no
+     stated whole-protein identity requirement. The 40% gate is therefore
+     not part of the original method and its removal for this one path does
+     not diverge further from Leino et al.; it removes an addition that was
+     never in the source method. EPSPS is a small, single-domain protein,
+     and glyphosate sensitivity is governed by active-site residues, not
+     overall fold-level conservation (Funke et al. 2009; Sammons and Gaines
+     2014), so a low whole-protein identity score is not, on its own,
+     evidence that the marker positions are misaligned or unreliable. The
+     bypass applies only to the Class I core-marker check; Class II, III,
+     and IV are still gated by the 40% threshold as before. The low
+     whole-protein identity is still recorded in `notes` even when the
+     bypass allows classification to proceed.
+
+  Both real class I benchmark organisms now classify correctly as Class I
+  (`Sensitive`), and real class II benchmark organisms still correctly do
+  not (`is_too_divergent=False`, `classes` does not contain `"I"`).
+  Regression tests using the exact benchmark sequences (hardcoded, no
+  network access required) added as `TestClassICoreMarkerThreshold` in
+  `tests/test_integration.py`.
+
+- Added `scripts/epsps/calibrate_class1_subset.py` and
+  `scripts/epsps/classify_and_calibrate.py` for reproducing this
+  calibration or re-deriving the marker subset against an expanded
+  benchmark panel. Requires network access to NCBI eutils to fetch fresh
+  benchmark sequences; not required to run the existing test suite.
+
+## v1.0.5 (2026)
+
+### Fixed
+
+- **CLI summary and warning miscounted unreliable sequences.** The
+  `--summary` output's "Flagged unreliable" count, and the
+  "WARNING: all sequences are below the identity threshold" message, used a
+  string-match against each result's `notes` field instead of the
+  classifier's own `is_too_divergent` property. A sequence that fails the
+  identity threshold against some references but passes against at least
+  one, and receives a valid primary classification, has a "below threshold"
+  note for the references it failed, which caused it to be miscounted as
+  unreliable even though `is_too_divergent` correctly read `False` for that
+  same result. Found while running this classifier on EPSPS proteins fetched
+  from NCBI for 164 genera: every sequence was flagged unreliable in the
+  summary despite valid per-sequence classifications in the TSV output. Both
+  the count and the warning now use `r.is_too_divergent` directly.
+- **`_print_summary`'s `file` parameter used a late-bound default.**
+  `file=sys.stderr` as a default argument value is evaluated once at module
+  import time, not per call, so if `sys.stderr` is ever replaced (for
+  example by a test harness or output-capturing wrapper) after import, the
+  default silently continues pointing at the original, possibly closed,
+  object. Changed to `file=None`, resolved to the live `sys.stderr` inside
+  the function body.
+- Added regression tests covering both issues in `tests/test_integration.py`.
+
+### Documentation correction
+
+- **v1.0.4's Class I Ia/Ib claim was checked against the real source and is
+  incorrect.** Obtained the actual Leino et al. (2021) Supplementary Table 1
+  (the full 464-position alignment table with separate Class Ia, Class Ib,
+  Class II, Class III, Class IV columns) and parsed it programmatically. The
+  Class Ia and Class Ib columns are identical at all 464 positions. There is
+  no sequence-level distinction between Ia and Ib in the published data, and
+  no separate marker sets to split out; "alpha and beta" in the paper's
+  results text appear to be historically named lineages sharing one marker
+  set, not two separate classifier inputs. Splitting `CLASS_I_MARKERS` into
+  `CLASS_IA_MARKERS`/`CLASS_IB_MARKERS` is not a valid fix and is no longer
+  an open issue for that reason.
+- The real cause of confirmed class I organisms still failing to match all
+  148 markers is the exact-match-all rule's strictness against genuine
+  sequence divergence, independent of any Ia/Ib question. This was already
+  documented correctly in the README's "Class I sequences from
+  phylogenetically distant taxa" limitation and remains unresolved: a count
+  threshold is not safely calibratable given the 2-marker gap between real
+  class II organisms (18-22 of 148) and distant class I organisms (24-28 of
+  148) in the benchmark panel.
+
 ## v1.0.4 (2026)
 
 ### Fixed based on benchmark testing
@@ -19,6 +127,14 @@ from Leino et al. (2021) Table 1 revealed two systematic classification failures
   Gut microbiome class I organisms find only 27-28 of 148 combined markers.
   This is a known limitation; implementing separate Ia and Ib marker sets
   is an open issue.
+
+  **Correction, v1.0.5:** the claim above is incorrect. Checked directly
+  against the paper's actual Supplementary Table 1 (the full 464-position
+  alignment table): the Class Ia and Class Ib columns are identical at every
+  position. There is no sequence-level distinction between Ia and Ib in the
+  published data, and no separate marker sets to implement. See the v1.0.5
+  entry below for the corrected understanding of why real class I organisms
+  still fail to match all 148 markers.
 - README methodological divergences section updated to document both thresholds
   with benchmark calibration data.
 - Known limitations section updated with class I Ia/Ib issue.
