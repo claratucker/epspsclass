@@ -87,7 +87,9 @@ def _row(r):
     }
 
 
-def _print_summary(results, file=sys.stderr):
+def _print_summary(results, file=None):
+    if file is None:
+        file = sys.stderr
     from collections import Counter
     counts = Counter(r.primary_class for r in results)
     n = len(results)
@@ -99,7 +101,7 @@ def _print_summary(results, file=sys.stderr):
     if mixed:
         pct = len(mixed) / n * 100
         print(f"  Mixed (>1 class) : {len(mixed):6d}  ({pct:.1f}%)", file=file)
-    unreliable = sum(1 for r in results if any("below threshold" in n for n in r.notes))
+    unreliable = sum(1 for r in results if r.is_too_divergent)
     if unreliable:
         print(f"  Flagged unreliable: {unreliable} ({unreliable/n*100:.1f}%)", file=file)
 
@@ -130,10 +132,7 @@ def cmd_classify(args: argparse.Namespace) -> int:
         return EXIT_NO_SEQUENCES
 
     # Warn if everything is unreliable
-    n_unreliable = sum(
-        1 for r in results
-        if all("below threshold" in n for n in r.notes) and r.notes
-    )
+    n_unreliable = sum(1 for r in results if r.is_too_divergent)
     if n_unreliable == len(results):
         print(
             "WARNING: all sequences are below the identity threshold. "
@@ -324,7 +323,7 @@ def main() -> None:
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--version", action="version", version="%(prog)s 1.0.4")
+    parser.add_argument("--version", action="version", version="%(prog)s 1.0.5")
 
     sub = parser.add_subparsers(dest="command", required=True)
 
